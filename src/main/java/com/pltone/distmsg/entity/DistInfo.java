@@ -25,7 +25,7 @@ public class DistInfo {
     private String depotName; //广西南宁油库
 
 
-    private static final DateTimeFormatter DISTRIBUT_NO_FORMATTER = DateTimeFormatter.ofPattern("yyMMddHHmm");
+    private static final DateTimeFormatter DISTRIBUT_NO_FORMATTER = DateTimeFormatter.ofPattern("yyMMddHHmmssSSS");
     private static final DateTimeFormatter EFFECT_DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     public static DistInfo build() {

@@ -9,6 +9,9 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import java.util.Timer;
+import java.util.TimerTask;
+
 /**
  * 配送下发
  *
@@ -22,10 +25,9 @@ import org.springframework.stereotype.Component;
 public class DistIssue {
     private static final String addr = "http://192.168.7.20:3008/Elock_Service.asmx";
 
-    @Scheduled(initialDelay = 1000L, fixedRate = 30 * 60 * 1000L)
+    @Scheduled(initialDelay = 1000L, fixedRate = 20 * 60 * 1000L)
     public void execute() {
         DistMsg distMsg = new DistMsg();
-        boolean change = false;
         String invoice = null;
         try {
             String massage = distMsg.generate();
@@ -34,23 +36,26 @@ public class DistIssue {
             String reply = ElockClient.setPlan(addr, massage);
             log.info("配送单【3G00-{}】新增报文应答：\n{}", invoice, reply);
 
-            Thread.sleep((BaseData.random().nextInt(30) + 5) * 60 * 1000L);
-
-            change = true;
-            massage = distMsg.change();
-            log.info("发送配送单【3G00-{}】换站报文：\n{}", invoice, massage);
-            reply = ElockClient.setPlan(addr, massage);
-            log.info("配送单【3G00-{}】换站报文应答：\n{}", invoice, reply);
-
-        } catch (InterruptedException e) {
-            // unexpected
+            delayChange(distMsg, invoice);
         } catch (Exception e) {
-            if (change) {
-                log.error("配送单【3G00-{}】换站报文异常：\n{}", invoice, e.toString());
-            } else {
-                log.error("配送单【3G00-{}】新增报文异常：\n{}", invoice, e.toString());
-            }
+            log.error("配送单【3G00-{}】新增报文异常：\n{}", invoice, e.toString());
         }
+    }
 
+    private void delayChange(DistMsg distMsg, String invoice) {
+        new Timer().schedule(new TimerTask() {
+            @Override
+            public void run() {
+                try {
+                    String massage = distMsg.change();
+                    log.info("发送配送单【3G00-{}】换站报文：\n{}", invoice, massage);
+                    String reply = ElockClient.setPlan(addr, massage);
+                    log.info("配送单【3G00-{}】换站报文应答：\n{}", invoice, reply);
+                } catch (Exception e) {
+                    log.error("配送单【3G00-{}】换站报文异常：\n{}", invoice, e.toString());
+                }
+
+            }
+        }, (BaseData.random().nextInt(30) + 5) * 60 * 1000L);
     }
 }
